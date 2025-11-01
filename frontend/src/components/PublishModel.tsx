@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import axios from 'axios'
+import React, { useMemo, useState } from 'react'
+import { api } from '../utils/api'
 
 type Props = { onPublished?: (modelName: string) => void }
 
@@ -11,12 +11,17 @@ export default function PublishModel({ onPublished }: Props){
   const [userId, setUserId] = useState('user-1')
   const [token, setToken] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fieldsIsValid = useMemo(()=>{
+    try { JSON.parse(fieldsJson); return true } catch { return false }
+  }, [fieldsJson])
 
   const makeToken = async () => {
     try{
       setLoading(true)
       // backend sets a session cookie for the user/role
-      await axios.post('/admin/login', { userId, role }, { withCredentials: true })
+      await api.post('/admin/login', { userId, role })
       setToken('session-set')
       alert('Session created for ' + userId + ' as ' + role)
     }catch(e){
@@ -26,39 +31,58 @@ export default function PublishModel({ onPublished }: Props){
 
   const publish = async () => {
     try{
+      setError(null)
       const fields = JSON.parse(fieldsJson)
       const payload = { name, fields, ownerField, rbac: { Admin: ['all'], Manager: ['create','read','update'], Viewer: ['read'] } }
       setLoading(true)
-      await axios.post('/admin/models/publish', payload, { withCredentials: true })
+      await api.post('/admin/models/publish', payload)
       alert('Published model ' + name)
       onPublished?.(name)
       setName('')
     }catch(err:any){
-      alert('Publish failed: ' + (err?.response?.data?.error || err?.message || err))
+      const msg = (err?.response?.data?.error || err?.message || err)
+      setError(String(msg))
+      alert('Publish failed: ' + msg)
     }finally{ setLoading(false) }
   }
 
   return (
-    <div className="card mb-4">
+    <div className="card mb-6">
       <h4 className="text-lg font-semibold">Publish Model</h4>
+      {error && <div className="mt-2 text-sm rounded-md px-3 py-2 bg-red-50 text-red-700 border border-red-200">{error}</div>}
       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Model name" className="w-full" />
-        <input value={ownerField} onChange={e=>setOwnerField(e.target.value)} placeholder="ownerField (optional)" className="w-full" />
-        <textarea value={fieldsJson} onChange={e=>setFieldsJson(e.target.value)} className="col-span-1 md:col-span-2 h-36 w-full" />
+        <label className="block">
+          <span className="block text-xs mb-1 text-gray-600">Model name</span>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="Product" className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+        </label>
+        <label className="block">
+          <span className="block text-xs mb-1 text-gray-600">Owner field (optional)</span>
+          <input value={ownerField} onChange={e=>setOwnerField(e.target.value)} placeholder="ownerId" className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+        </label>
+        <label className="block md:col-span-2">
+          <div className="flex items-center justify-between">
+            <span className="block text-xs mb-1 text-gray-600">Fields JSON</span>
+            {!fieldsIsValid && <span className="text-xs text-red-600">Invalid JSON</span>}
+          </div>
+          <textarea value={fieldsJson} onChange={e=>setFieldsJson(e.target.value)} className="h-36 w-full border rounded-md px-3 py-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+        </label>
 
-        <div className="flex gap-2 items-center col-span-1 md:col-span-2">
-          <input value={userId} onChange={e=>setUserId(e.target.value)} className="border px-2 py-1 rounded" placeholder="session userId" />
-          <select value={role} onChange={e=>setRole(e.target.value)} className="border px-2 py-1 rounded">
-            <option>Admin</option>
-            <option>Manager</option>
-            <option>Viewer</option>
-          </select>
-          <button onClick={makeToken} className="btn" disabled={loading}>{loading ? '...' : 'Set Session'}</button>
-          <div className="text-sm break-all muted">{token}</div>
+        <div className="md:col-span-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <input value={userId} onChange={e=>setUserId(e.target.value)} className="border px-3 py-2 rounded-md" placeholder="session userId" />
+            <select value={role} onChange={e=>setRole(e.target.value)} className="border px-3 py-2 rounded-md">
+              <option>Admin</option>
+              <option>Manager</option>
+              <option>Viewer</option>
+            </select>
+            <button onClick={makeToken} className="btn" disabled={loading}>{loading ? '...' : 'Set Session'}</button>
+            <div className="text-xs break-all muted">{token}</div>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Set a session to authenticate API calls. Use Admin to publish models.</p>
         </div>
 
-        <div className="col-span-1 md:col-span-2 flex justify-end gap-2">
-          <button onClick={publish} className="btn" disabled={loading || !name}>Publish</button>
+        <div className="md:col-span-2 flex justify-end gap-2">
+          <button onClick={publish} className="btn disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading || !name || !fieldsIsValid}>Publish</button>
         </div>
       </div>
     </div>

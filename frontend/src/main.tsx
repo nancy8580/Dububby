@@ -1,29 +1,33 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, NavLink } from 'react-router-dom'
 import AdminModels from './pages/AdminModels'
 import './index.css'
-import axios from 'axios'
+import { api } from './utils/api'
 
-axios.defaults.withCredentials = true
+// Ensure cookies are sent for session-backed APIs (proxied via Vite)
+api.defaults.withCredentials = true
 
 function App(){
   return (
     <BrowserRouter>
-      <div className="app-container">
-        <header className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Low-Code CRUD Admin</h1>
-              <p className="text-sm muted">Publish models, manage data and permissions</p>
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+        <header className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-md bg-emerald-500" />
+              <div>
+                <h1 className="text-lg font-semibold tracking-tight">Low‑Code CRUD Admin</h1>
+                <p className="text-xs text-gray-500 hidden sm:block">Publish models, manage data and permissions</p>
+              </div>
             </div>
-            <nav className="space-x-3">
-              <Link to="/" className="text-sm text-gray-700 hover:text-gray-900">Models</Link>
+            <nav className="flex items-center gap-4 text-sm">
+              <NavLink to="/" className={({isActive})=>`transition-colors hover:text-gray-900 ${isActive?'text-gray-900 font-medium':'text-gray-600'}`}>Models</NavLink>
             </nav>
           </div>
         </header>
 
-        <main>
+        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <Routes>
             <Route path="/" element={<AdminModels/>} />
           </Routes>
