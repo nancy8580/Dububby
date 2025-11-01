@@ -1,0 +1,14 @@
+{
+  "name": "Product",
+  "fields": [
+    { "name": "name", "type": "string", "required": true },
+    { "name": "price", "type": "number", "required": true },
+    { "name": "ownerId", "type": "string" }
+  ],
+  "ownerField": "ownerId",
+  "rbac": {
+    "Admin": ["all"],
+    "Manager": ["create", "read", "update"],
+    "Viewer": ["read"]
+  }
+}

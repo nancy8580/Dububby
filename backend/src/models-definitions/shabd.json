@@ -1,0 +1,24 @@
+{
+  "name": "shabd",
+  "fields": [
+    {
+      "name": "title",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "ownerField": "ownerId",
+  "rbac": {
+    "Admin": [
+      "all"
+    ],
+    "Manager": [
+      "create",
+      "read",
+      "update"
+    ],
+    "Viewer": [
+      "read"
+    ]
+  }
+}
